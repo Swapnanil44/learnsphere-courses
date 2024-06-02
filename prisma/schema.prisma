@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // or "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId       Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  dateOfBirth  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  courses      Course[]  @relation("InstructorCourses")
+  enrollments  Enrollment[]
+  reviews      Review[]
+}
+
+model Admin {
+  adminId      Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  role         Role      @default(admin)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Course {
+  courseId     Int       @id @default(autoincrement())
+  title        String
+  description  String
+  instructor   User      @relation("InstructorCourses", fields: [instructorId], references: [userId])
+  instructorId Int
+  price        Float
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  enrollments  Enrollment[]
+  reviews      Review[]
+}
+
+model Enrollment {
+  enrollmentId Int       @id @default(autoincrement())
+  user         User      @relation(fields: [userId], references: [userId])
+  userId       Int
+  course       Course    @relation(fields: [courseId], references: [courseId])
+  courseId     Int
+  enrolledAt   DateTime  @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Review {
+  reviewId     Int       @id @default(autoincrement())
+  user         User      @relation(fields: [userId], references: [userId])
+  userId       Int
+  course       Course    @relation(fields: [courseId], references: [courseId])
+  courseId     Int
+  rating       Int       // Validate rating between 1 and 5 in application logic
+  comment      String?
+  createdAt    DateTime  @default(now())
+}
+
+model Instructor {
+  instructorId Int       @id @default(autoincrement())
+  //user         User      @relation(fields: [userId], references: [userId])
+  userId       Int
+  bio          String?
+  profilePicture String?
+}
+
+enum Role {
+  superadmin
+  admin
+  moderator
+}
